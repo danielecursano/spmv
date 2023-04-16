@@ -8,5 +8,6 @@ struct CSR_Matrix {
 
 int isValid(int row, int col, struct CSR_Matrix *matrix);
 void print_matrix(struct CSR_Matrix *matrix);
+int *product(struct CSR_Matrix *matrix, int *vector);
 
 #endif //SPMV_MATRIX_H
