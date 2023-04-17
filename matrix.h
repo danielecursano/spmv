@@ -10,5 +10,6 @@ int isValid(int row, int col, struct CSR_Matrix *matrix);
 void print_matrix(struct CSR_Matrix *matrix);
 int *product(struct CSR_Matrix *matrix, int *vector);
 struct CSR_Matrix * fromMatrix(int **matrix, int r, int c);
+void freeMatrix(struct CSR_Matrix *matrix);
 
 #endif //SPMV_MATRIX_H

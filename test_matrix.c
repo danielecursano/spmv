@@ -30,6 +30,7 @@ int main(int argv, char **argc) {
     printf("EXEC TIME: %lf\n",  end-start);
     free(output);
     /*
+     * TESTING FROMMATRIX FUNCTION
     int LEN = atoi(argc[1]), i, j;
     srand(time(NULL));
     int** matrix = (int**)malloc(LEN * sizeof(int*));

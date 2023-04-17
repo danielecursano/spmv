@@ -3,7 +3,8 @@
 #include <stdlib.h>
 
 int isValid(int row, int col, struct CSR_Matrix *matrix) {
-    for (int r=0; r<matrix->nnz; r++) {
+    int r;
+    for (r=0; r<matrix->nnz; r++) {
         if ((*matrix).row_index[r]==row && (*matrix).col_index[r]==col) {
             return (*matrix).values[r];
         }
@@ -21,8 +22,7 @@ void print_matrix(struct CSR_Matrix *matrix) {
 }
 
 int *product(struct CSR_Matrix *matrix, int *vector) {
-    int *output = (int *) calloc(matrix->row, sizeof(int));
-    int iter;
+    int iter, *output = (int *) calloc(matrix->row, sizeof(int));
     for (iter=0; iter<matrix->nnz; iter++) {
         output[(*matrix).row_index[iter]] += (*matrix).values[iter]*vector[(*matrix).col_index[iter]];
     }
@@ -30,9 +30,9 @@ int *product(struct CSR_Matrix *matrix, int *vector) {
 }
 
 struct CSR_Matrix * fromMatrix(int **matrix, int r, int c) {
-    int n_values = 0;
-    for (int i = 0; i < r; i++) {
-        for (int j = 0; j < c; j++) {
+    int i, j, n_values = 0;
+    for (i = 0; i < r; i++) {
+        for (j = 0; j < c; j++) {
             if (matrix[i][j] != 0)
                 n_values++;
         }
@@ -41,8 +41,8 @@ struct CSR_Matrix * fromMatrix(int **matrix, int r, int c) {
     int *col_index = (int *) malloc(sizeof(int)*n_values);
     int *row_index = (int *) malloc(sizeof(int)*(n_values+1));
     int id=0;
-    for (int i = 0; i < r; i++) {
-        for (int j = 0; j < c; j++) {
+    for (i = 0; i < r; i++) {
+        for (j = 0; j < c; j++) {
             if (matrix[i][j] != 0) {
                 values[id] = matrix[i][j];
                 col_index[id] = j;
@@ -60,4 +60,10 @@ struct CSR_Matrix * fromMatrix(int **matrix, int r, int c) {
     m->row_index = row_index;
     m->col_index = col_index;
     return m;
+}
+
+void freeMatrix(struct CSR_Matrix *matrix) {
+    free(matrix->values);
+    free(matrix->row_index);
+    free(matrix->col_index);
 }
