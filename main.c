@@ -2,10 +2,10 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include "utils.h"
+#include "matrix.h"
+//#define LEN 4
 
-#define LEN 4
-
-int * matrix_multiplication(int matrix[4][4], int *kernel, int m_rows, int m_cols, int k_rows)
+int * matrix_multiplication(int **matrix, int *kernel, int m_rows, int m_cols, int k_rows)
 {
     // k_cols == 1
     // kernel is a column vector
@@ -15,12 +15,13 @@ int * matrix_multiplication(int matrix[4][4], int *kernel, int m_rows, int m_col
     }
     int *output = (int *)calloc(m_cols, sizeof(int));
     for (int i=0; i<m_rows; i++)
-        for (int k=0; k<m_cols; k++)
+        for (int k=0; k<m_cols; k++) {
             output[i] += matrix[i][k] * kernel[k];
+        }
     return output;
 }
 
-void print_matrix(int **matrix, int rows, int cols) {
+void print(int **matrix, int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             printf("%d ", matrix[i][j]);
@@ -31,35 +32,66 @@ void print_matrix(int **matrix, int rows, int cols) {
 
 int main(int argv, char **argc) {
     srand(time(NULL));
-    //int LEN = atoi(argc[1]);
-    int i, j, kernel[LEN]={1, 2, 3, 4};
+    int LEN = atoi(argc[1]);
+    int i, j, *kernel = (int *)calloc(LEN, sizeof(int));
     double start, end;
-    /*
+
     int** matrix = (int**)malloc(LEN * sizeof(int*));
     for (i = 0; i < LEN; i++)
         matrix[i] = (int*)malloc(LEN * sizeof(int));
     
     for (i = 0; i < LEN; i++) {
-        for (j = 0; j < LEN; j++)
-            matrix[i][j] = rand() % 50;
-        kernel[i] = rand() % 50;
+        for (j = 0; j < LEN; j++) {
+            if (rand() % 10 == 6) {
+                matrix[i][j] = rand() % 11;
+            } else {
+                matrix[i][j] = 0;
+            }
+        }
+        kernel[i] = rand() % 10;
     }
+    /*
+    printf("KERNEL: ");
+    for (i=0; i<LEN; i++)
+        printf("%d ", kernel[i]);
+    printf("\n");
     */
-    int matrix[4][4] = {{1, 0, 3, 0}, {0, 0, 0, 0}, {0, 2, 4, 0}, {7, 8, 0, 0}};
-    //print_matrix(matrix, LEN, LEN);
+    //int matrix[4][4] = {{1, 0, 3, 0}, {0, 0, 0, 0}, {0, 2, 4, 0}, {7, 8, 0, 0}};
+    //print(matrix, LEN, LEN);
     start = get_time();
     int *output = matrix_multiplication(matrix, kernel, LEN, LEN, LEN);
     end = get_time();
-    printf("FIRST METHOD: %lf\n", end-start);
-
+    printf("FIRST METHOD: %lf s\n", end-start);
+    /*
+    printf("OUTPUT: ");
     for (i=0; i<LEN; i++)
         printf("%d ", output[i]);
     printf("\n");
+    */
+    struct CSR_Matrix *new = fromMatrix(matrix, LEN, LEN);
+    //print_matrix(new);
+    start = get_time();
+    int *output2 = product(new, kernel);
+    end = get_time();
+    printf("SECOND METHOD: %lf s\n", end-start);
     /*
+    printf("OUTPUT 2: ");
+    for (i=0; i<LEN; i++)
+        printf("%d ", output2[i]);
+    printf("\n");
+    */
+
+    for (i=0; i<LEN; i++) {
+        if (output[i]!=output2[i]) {
+            printf("OUTPUTS NOT MATCHING!\n");
+            exit(0);
+        }
+    }
+
     for (i=0; i<LEN; i++)
         free(matrix[i]);
     free(matrix);
-     */
     free(output);
-    //printf("EXEC TIME: %lf\n", end-start);
+    free(kernel);
+    free(output2);
 }
