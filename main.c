@@ -1,16 +1,11 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include <time.h>
-#define LEN 1000
+#include "utils.h"
 
-double get_time() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
-}
+#define LEN 4
 
-int * matrix_multiplication(int **matrix, int *kernel, int m_rows, int m_cols, int k_rows)
+int * matrix_multiplication(int matrix[4][4], int *kernel, int m_rows, int m_cols, int k_rows)
 {
     // k_cols == 1
     // kernel is a column vector
@@ -34,11 +29,12 @@ void print_matrix(int **matrix, int rows, int cols) {
     }
 }
 
-int main() {
+int main(int argv, char **argc) {
     srand(time(NULL));
-
-    int i, j, kernel[LEN];
+    //int LEN = atoi(argc[1]);
+    int i, j, kernel[LEN]={1, 2, 3, 4};
     double start, end;
+    /*
     int** matrix = (int**)malloc(LEN * sizeof(int*));
     for (i = 0; i < LEN; i++)
         matrix[i] = (int*)malloc(LEN * sizeof(int));
@@ -48,20 +44,22 @@ int main() {
             matrix[i][j] = rand() % 50;
         kernel[i] = rand() % 50;
     }
-
+    */
+    int matrix[4][4] = {{1, 0, 3, 0}, {0, 0, 0, 0}, {0, 2, 4, 0}, {7, 8, 0, 0}};
     //print_matrix(matrix, LEN, LEN);
     start = get_time();
-    int *output = matrix_multiplication(matrix, &kernel, LEN, LEN, LEN);
+    int *output = matrix_multiplication(matrix, kernel, LEN, LEN, LEN);
     end = get_time();
     printf("FIRST METHOD: %lf\n", end-start);
 
     for (i=0; i<LEN; i++)
         printf("%d ", output[i]);
     printf("\n");
-
+    /*
     for (i=0; i<LEN; i++)
         free(matrix[i]);
     free(matrix);
+     */
     free(output);
     //printf("EXEC TIME: %lf\n", end-start);
 }

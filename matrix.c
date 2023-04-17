@@ -22,15 +22,8 @@ void print_matrix(struct CSR_Matrix *matrix) {
 
 int *product(struct CSR_Matrix *matrix, int *vector) {
     int *output = (int *) calloc(matrix->row, sizeof(int));
-    int r, iter_row;
-    for (r=0; r<matrix->row; r++) {
-        iter_row = 0;
-        while (iter_row < matrix->nnz) {
-            if (r==(*matrix).row_index[iter_row]) {
-                output[r] += (*matrix).values[iter_row]*vector[(*matrix).col_index[iter_row]];
-            }
-            iter_row++;
-        }
-    }
+    int iter;
+    for (iter=0; iter<matrix->nnz; iter++)
+        output[(*matrix).row_index[iter]] += (*matrix).values[iter]*vector[(*matrix).col_index[iter]];
     return output;
 }
