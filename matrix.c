@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int isValid(int row, int col, struct CSR_Matrix *matrix) {
+float isValid(int row, int col, struct CSR_Matrix *matrix) {
     int r;
     for (r=0; r<matrix->nnz; r++) {
         if ((*matrix).row_index[r]==row && (*matrix).col_index[r]==col) {
@@ -16,20 +16,21 @@ void print_matrix(struct CSR_Matrix *matrix) {
     int c, r;
     for (r=0; r<matrix->row; r++) {
         for (c=0; c<matrix->col; c++)
-            printf("%d ", isValid(r, c, matrix));
+            printf("%f ", isValid(r, c, matrix));
         printf("\n");
     }
 }
 
-int *product(struct CSR_Matrix *matrix, int *vector) {
-    int iter, *output = (int *) calloc(matrix->row, sizeof(int));
+float *product(struct CSR_Matrix *matrix, int *vector) {
+    int iter;
+    float *output = (float *) calloc(matrix->row, sizeof(float ));
     for (iter=0; iter<matrix->nnz; iter++) {
         output[(*matrix).row_index[iter]] += (*matrix).values[iter]*vector[(*matrix).col_index[iter]];
     }
     return output;
 }
 
-struct CSR_Matrix * fromMatrix(int **matrix, int r, int c) {
+struct CSR_Matrix * fromMatrix(float **matrix, int r, int c) {
     int i, j, n_values = 0;
     for (i = 0; i < r; i++) {
         for (j = 0; j < c; j++) {
@@ -37,7 +38,7 @@ struct CSR_Matrix * fromMatrix(int **matrix, int r, int c) {
                 n_values++;
         }
     }
-    int *values = (int *) malloc(sizeof(int)*n_values);
+    float *values = (float *) malloc(sizeof(float)*n_values);
     int *col_index = (int *) malloc(sizeof(int)*n_values);
     int *row_index = (int *) malloc(sizeof(int)*(n_values+1));
     int id=0;
