@@ -49,6 +49,9 @@ int main(int argv, char **argc) {
     float *output = product(&matrix, kernel);
     end = get_time();
     printf("EXEC TIME CPU: %lfs\n", end-start);
+    for (i=0; i<DIM; i++) {
+        printf("%f\n", output[i]);
+    }
     /*
     int values[]={1, 3, 2, 4, 7, 8}, col[]={0, 2, 1, 2, 0, 1}, row[]={0, 0, 2, 2, 3, 3, 6};
     double start, end;

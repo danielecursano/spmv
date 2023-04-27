@@ -3,7 +3,7 @@ project(spvm CUDA)
 
 set(CMAKE_CUDA_STANDARD 17)
 
-add_executable(spvm main.c)
+add_executable(spvm 2darray_vs_csr.c)
 
 set_target_properties(spvm PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

@@ -2,6 +2,7 @@
 #include "time.h"
 #include "sys/time.h"
 #include "stdio.h"
+#include "utils.h"
 
 #define CHECK(call)                                                                       \
     {                                                                                     \
@@ -23,18 +24,27 @@
         }                                                                                 \
     }
 
-double get_time() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
+struct CSR_Matrix {
+    int row, col, nnz;
+    int *col_index, *row_index;
+    float *values;
+};
+
+float *product(struct CSR_Matrix *matrix, int *vector) {
+    int iter;
+    float *output = (float *) calloc(matrix->row, sizeof(float ));
+    for (iter=0; iter<matrix->nnz; iter++) {
+        output[(*matrix).row_index[iter]] += (*matrix).values[iter]*vector[(*matrix).col_index[iter]];
+    }
+    return output;
 }
 
-__global__ void productKernel(float *values, int *columns, int *rows, int *kernel, int *output, int *nnz) {
+__global__ void productKernel(float *values, int *columns, int *rows, int *kernel, float *output, int nnz) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
-    int section = (*nnz-1) / (blockDim.x * gridDim.x) + 1;
+    int section = (nnz-1) / (blockDim.x * gridDim.x) + 1;
     int start = i * section;
     for (size_t k=0; k<section; k++) {
-        if (start+k < *nnz)
+        if (start+k < nnz)
             atomicAdd(&(output[rows[start+k]]), values[start+k] * kernel[columns[start+k]]);
     }
 }
@@ -50,42 +60,43 @@ int main(int argv, char **argc) {
     int BLOCKDIM = atoi(argc[1]);
     int LEN, NNZ;
     fscanf(data, "%d %d %d", &LEN, &LEN, &NNZ);
-    int i, *kernel = (int *)malloc(LEN*sizeof(int)), *output = (int *)calloc(LEN, sizeof(int)), *gpu_output = (int *)calloc(LEN, sizeof(int));
-    float *values = (float*)malloc(NNZ*sizeof(float));
-    int *col_index = (int *)malloc(NNZ*sizeof(int));
-    int *row_index = (int *)malloc(NNZ*sizeof(int));
+    int i, *kernel, *row_index, *col_index;
+    float *values, *output, *gpu_output;
     double start, end;
+    CHECK(cudaMallocManaged(&kernel, sizeof(int)*LEN));
+    output = (float *)calloc(LEN, sizeof(float));
+    CHECK(cudaMallocManaged(&gpu_output, sizeof(float)*LEN));
+    CHECK(cudaMallocManaged(&row_index, sizeof(int)*NNZ));
+    CHECK(cudaMallocManaged(&col_index, sizeof(int)*NNZ));
+    CHECK(cudaMallocManaged(&values, sizeof(float)*NNZ));
     printf("STARTED SCANNING MATRIX...\n");
     for (i=0; i<NNZ; i++) {
         fscanf(data, "%d %d %f", &col_index[i], &row_index[i], &values[i]);
     }
+    for (i=0; i<LEN; i++) {
+        kernel[i] = rand()%20;
+    }
     printf("VALUES SCANNED\n");
+
+    //cpu process
+    CSR_Matrix matrix = {LEN, LEN, NNZ, col_index, row_index, values};
+    start = get_time();
+    output = product(&matrix, kernel);
+    end = get_time();
+    printf("EXEC TIME CPU: %lf s\n", end-start);
+
     dim3 blocksPerGrid((LEN + BLOCKDIM - 1) / BLOCKDIM, 1, 1);
     dim3 threadsPerBlock(BLOCKDIM, 1, 1);
-    float *d_values;
-    int *dcol_index, *drow_index, *d_kernel, *d_output, *d_nnz;
-    CHECK(cudaMalloc(&d_values, NNZ*sizeof(float)));
-    CHECK(cudaMalloc(&dcol_index, NNZ*sizeof(int)));
-    CHECK(cudaMalloc(&drow_index, NNZ*sizeof(int)));
-    CHECK(cudaMalloc(&d_kernel, LEN*sizeof(int)));
-    CHECK(cudaMalloc(&d_output, LEN*sizeof(int)));
-    CHECK(cudaMalloc((void**)&d_nnz, sizeof(int)));
-
-    CHECK(cudaMemcpy(d_values, values, NNZ*sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(dcol_index, col_index, NNZ*sizeof(int), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(drow_index, row_index, NNZ*sizeof(int), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(d_kernel, kernel, LEN*sizeof(int), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(d_nnz, &NNZ, sizeof(int), cudaMemcpyHostToDevice));
     start = get_time();
-    productKernel<<<blocksPerGrid, threadsPerBlock>>>(d_values, dcol_index, drow_index, d_kernel, d_output, d_nnz);
+    productKernel<<<blocksPerGrid, threadsPerBlock>>>(values, col_index, row_index, kernel, gpu_output, NNZ);
     CHECK_KERNELCALL();
     end = get_time();
-    CHECK(cudaMemcpy(gpu_output, d_output, LEN*sizeof(int), cudaMemcpyDeviceToHost));
     printf("EXEC TIME GPU: %lf s\n", end-start);
 
-    CHECK(cudaFree(d_values));
-    CHECK(cudaFree(dcol_index));
-    CHECK(cudaFree(drow_index));
-    CHECK(cudaFree(d_kernel));
-    CHECK(cudaFree(d_output));
+    CHECK(cudaFree(values));
+    CHECK(cudaFree(col_index));
+    CHECK(cudaFree(row_index));
+    CHECK(cudaFree(kernel));
+    CHECK(cudaFree(gpu_output));
+    free(output);
 }
