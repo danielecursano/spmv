@@ -2,7 +2,8 @@
 #include "time.h"
 #include "sys/time.h"
 #include "stdio.h"
-#include "utils.h"
+#include "../include/utils.h"
+#include "../include/matrix.h"
 
 #define CHECK(call)                                                                       \
     {                                                                                     \
@@ -23,21 +24,6 @@
             exit(EXIT_FAILURE);                                                           \
         }                                                                                 \
     }
-
-struct CSR_Matrix {
-    int row, col, nnz;
-    int *col_index, *row_index;
-    float *values;
-};
-
-float *product(struct CSR_Matrix *matrix, int *vector) {
-    int iter;
-    float *output = (float *) calloc(matrix->row, sizeof(float ));
-    for (iter=0; iter<matrix->nnz; iter++) {
-        output[(*matrix).row_index[iter]] += (*matrix).values[iter]*vector[(*matrix).col_index[iter]];
-    }
-    return output;
-}
 
 __global__ void productKernel(float *values, int *columns, int *rows, int *kernel, float *output, int nnz) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
